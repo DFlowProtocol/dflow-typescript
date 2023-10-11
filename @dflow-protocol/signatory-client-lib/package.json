@@ -1,0 +1,79 @@
+{
+  "name": "@dflow-protocol/signatory-client-lib",
+  "version": "1.0.8",
+  "license": "SEE LICENSE IN LICENSE",
+  "exports": {
+    ".": {
+      "default": "./dist/index.js"
+    },
+    "./error": {
+      "default": "./dist/error.js"
+    },
+    "./evm": {
+      "default": "./dist/evm/index.js"
+    },
+    "./evm/legacy": {
+      "default": "./dist/evm/legacy/index.js"
+    },
+    "./evm/sponsored": {
+      "default": "./dist/evm/sponsored/index.js"
+    },
+    "./markets": {
+      "default": "./dist/markets/index.js"
+    },
+    "./solana": {
+      "default": "./dist/solana/index.js"
+    },
+    "./util": {
+      "default": "./dist/util.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "*": [
+        "./dist/*.d.ts"
+      ],
+      "error": [
+        "./dist/error.d.ts"
+      ],
+      "evm": [
+        "./dist/evm/index.d.ts"
+      ],
+      "evm/legacy": [
+        "./dist/evm/legacy/index.d.ts"
+      ],
+      "evm/sponsored": [
+        "./dist/evm/sponsored/index.d.ts"
+      ],
+      "markets": [
+        "./dist/markets/index.d.ts"
+      ],
+      "solana": [
+        "./dist/solana/index.d.ts"
+      ],
+      "util": [
+        "./dist/util.d.ts"
+      ]
+    }
+  },
+  "files": [
+    "./dist",
+    "./src"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && tsc",
+    "dev": "tsc-watch",
+    "clean": "rm -rf dist",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "zod": "^3.22.4"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.38.0",
+    "@typescript-eslint/parser": "^5.38.0",
+    "eslint": "^8.23.1",
+    "tsc-watch": "^5.0.3",
+    "typescript": "^4.8.3"
+  }
+}

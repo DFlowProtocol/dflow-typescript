@@ -1,0 +1,16 @@
+{
+  "name": "root",
+  "private": true,
+  "workspaces": [
+    "@dflow-protocol/*"
+  ],
+  "scripts": {
+    "build": "nx run-many --target=build",
+    "clean": "nx run-many --target=clean",
+    "lint": "nx run-many --target=lint"
+  },
+  "devDependencies": {
+    "nx": "15.0.1"
+  },
+  "packageManager": "yarn@1.22.19"
+}

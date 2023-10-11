@@ -1,0 +1,1 @@
+export const WITHDRAW_MESSAGE_SIZE = 48;
