@@ -3,6 +3,7 @@ import { z } from "zod";
 export type MarketMakerEVMConfig = z.infer<typeof marketMakerEVMConfig>;
 export const marketMakerEVMConfig = z.object({
     keypairPath: z.string(),
+    standardSwapContractAddress: z.string(),
     chains: z.array(z.object({
         auctionNetwork: z.string(),
         rpcURL: z.string(),

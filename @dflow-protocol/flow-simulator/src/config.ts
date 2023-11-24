@@ -38,7 +38,7 @@ const baseAuctionConfig = {
 const evmFeePayerModeString = z.string().refine(x => {
     const xAsFeePayerModeString = x as keyof typeof EvmFeePayerMode;
     switch(xAsFeePayerModeString) {
-        case "Legacy":
+        case "Standard":
         case "Sponsored":
             return true;
         default: {

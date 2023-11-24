@@ -2,8 +2,8 @@ import { getContractAddressesForChainOrThrow } from "@0x/contract-addresses";
 import { AuctionInfo } from "@dflow-protocol/client";
 import { isSafeInteger } from "./coding";
 import { ethers } from "ethers";
-import { EVMLegacyStrategy } from "./lib/evm/legacyStrategy";
 import { EVMSponsoredStrategy } from "./lib/evm/sponsoredStrategy";
+import { EVMStandardStrategy } from "./lib/evm/standardStrategy";
 import { ISolanaStrategy } from "./lib/solana/strategy";
 import { Logger } from "./logger";
 
@@ -68,13 +68,22 @@ export class MarketMakerEVMChainContext {
     }
 }
 
+type MarketMakerAPIEVMContextParams = {
+    standardSwapContractAddress: string
+    chainContexts: MarketMakerEVMChainContext[]
+}
+
 export class MarketMakerAPIEVMContext {
+    readonly standardSwapContractAddress: string
     readonly networkToChainContext: Map<string, MarketMakerEVMChainContext>
     readonly auctionIdToChainContext: Map<bigint, MarketMakerEVMChainContext>
     readonly sponsoredStrategy: EVMSponsoredStrategy
-    readonly legacyStrategy: EVMLegacyStrategy
+    readonly standardStrategy: EVMStandardStrategy
 
-    constructor(chainContexts: MarketMakerEVMChainContext[]) {
+    constructor(params: MarketMakerAPIEVMContextParams) {
+        const { standardSwapContractAddress, chainContexts } = params;
+        this.standardSwapContractAddress = standardSwapContractAddress;
+
         if (chainContexts.length === 0) {
             throw new Error("Must include at least one chain context");
         }
@@ -90,7 +99,7 @@ export class MarketMakerAPIEVMContext {
 
         this.auctionIdToChainContext = new Map();
         this.sponsoredStrategy = new EVMSponsoredStrategy();
-        this.legacyStrategy = new EVMLegacyStrategy();
+        this.standardStrategy = new EVMStandardStrategy();
     }
 
     getChainContextByNetwork(network: string): MarketMakerEVMChainContext | undefined {

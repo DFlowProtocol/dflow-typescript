@@ -1,6 +1,6 @@
 {
   "name": "@dflow-protocol/client",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "license": "SEE LICENSE IN LICENSE",
   "module": "./dist/index.js",
   "main": "./dist/index.js",

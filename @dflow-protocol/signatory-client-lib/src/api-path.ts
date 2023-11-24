@@ -6,7 +6,7 @@ export const commonBasePath = "/common";
 
 export const solanaBasePath = "/solana";
 
-export const evmLegacyBasePath = "/evm";
+export const evmStandardBasePath = "/evm";
 export const evmSponsoredBasePath = "/evm/sponsored";
 
 export const marketsBasePath = "/markets";

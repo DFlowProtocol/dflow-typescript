@@ -3,12 +3,12 @@ import {
     IndicativeQuoteGetResponse,
     schemaFirmQuotePostRequest,
     schemaIndicativeQuoteGetQuery,
-} from "@dflow-protocol/market-maker-evm-client-lib/legacy";
+} from "@dflow-protocol/market-maker-evm-client-lib/standard";
 import { flowApiPaths } from "@dflow-protocol/signatory-client-lib";
 import { Request, Response, Router } from "express";
 import { MarketMakerAPIContext, MarketMakerAPIEVMContext } from "../context";
 
-export class MarketMakerAPIEVMLegacyRouter {
+export class MarketMakerAPIEVMStandardRouter {
     readonly context: MarketMakerAPIContext;
     readonly evmContext: MarketMakerAPIEVMContext;
     readonly router: Router;
@@ -30,7 +30,7 @@ export class MarketMakerAPIEVMLegacyRouter {
         res: Response<IndicativeQuoteGetResponse>,
     ): Promise<Response<IndicativeQuoteGetResponse>> {
         const params = schemaIndicativeQuoteGetQuery.parse(req.query);
-        const quote = await this.evmContext.legacyStrategy.getIndicativeQuote({
+        const quote = await this.evmContext.standardStrategy.getIndicativeQuote({
             xToken: params.sendToken,
             yToken: params.receiveToken,
             minFillPrice: BigInt(params.minFillPrice),
@@ -53,7 +53,7 @@ export class MarketMakerAPIEVMLegacyRouter {
             throw new Error(`No chain context for auction ${request.auctionId}`);
         }
 
-        const quote = await this.evmContext.legacyStrategy.getFirmQuote(request, chainContext);
+        const quote = await this.evmContext.standardStrategy.getFirmQuote(request, chainContext);
 
         return res.json(quote);
     }

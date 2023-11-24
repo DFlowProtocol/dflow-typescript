@@ -1,25 +1,25 @@
 {
   "name": "@dflow-protocol/market-maker-evm-client-lib",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "license": "SEE LICENSE IN LICENSE",
   "exports": {
     ".": {
       "default": "./dist/index.js"
     },
-    "./legacy": {
-      "default": "./dist/legacy/index.js"
-    },
     "./sponsored": {
       "default": "./dist/sponsored/index.js"
+    },
+    "./standard": {
+      "default": "./dist/standard/index.js"
     }
   },
   "typesVersions": {
     "*": {
-      "legacy": [
-        "./dist/legacy/index.d.ts"
-      ],
       "sponsored": [
         "./dist/sponsored/index.d.ts"
+      ],
+      "standard": [
+        "./dist/standard/index.d.ts"
       ],
       "*": [
         "./dist/*.d.ts"
@@ -37,7 +37,7 @@
     "lint": "eslint src"
   },
   "dependencies": {
-    "@dflow-protocol/signatory-client-lib": "^1.0.8",
+    "@dflow-protocol/signatory-client-lib": "1.1.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {

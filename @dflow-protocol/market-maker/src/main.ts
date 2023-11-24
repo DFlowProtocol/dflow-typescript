@@ -1,5 +1,11 @@
 import { DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
-import { BridgeClient, DFlowClient, DFlowPrefix, Network } from "@dflow-protocol/client";
+import {
+    BridgeClient,
+    DFlowClient,
+    DFlowPrefix,
+    EvmFeePayerMode,
+    Network,
+} from "@dflow-protocol/client";
 import { NATIVE_TOKEN_ADDRESS } from "@dflow-protocol/signatory-client-lib/evm";
 import { Connection, Keypair } from "@solana/web3.js";
 import fs from "fs";
@@ -69,7 +75,10 @@ async function main(opts: any): Promise<void> {
         }
         await Promise.all(evmChainContexts.map(x => x.validate()));
         if (evmChainContexts.length > 0) {
-            evmContext = new MarketMakerAPIEVMContext(evmChainContexts);
+            evmContext = new MarketMakerAPIEVMContext({
+                standardSwapContractAddress: config.evm.standardSwapContractAddress,
+                chainContexts: evmChainContexts,
+            });
             allowanceGranter = new AllowanceGranter(evmContext);
         }
     }
@@ -106,7 +115,7 @@ async function main(opts: any): Promise<void> {
                 if (auction.isSponsoredSwap) {
                     return `${config.marketMakerURL}${apiPath.evmSponsored}`;
                 } else {
-                    return `${config.marketMakerURL}${apiPath.evmLegacy}`;
+                    return `${config.marketMakerURL}${apiPath.evm}`;
                 }
             }
             switch (auctionNetwork) {
@@ -138,7 +147,9 @@ async function main(opts: any): Promise<void> {
                     );
                 }
                 const closedEvmChainContext = evmChainContext;
-                const allowanceTarget = evmChainContext.zeroExExchangeProxyAddress;
+                const allowanceTarget = auction.feePayerMode === EvmFeePayerMode.Sponsored
+                    ? evmChainContext.zeroExExchangeProxyAddress
+                    : evmContext.standardSwapContractAddress;
                 const grantAllowance = (token: string) => {
                     if (token === NATIVE_TOKEN_ADDRESS) {
                         // Grant WETH allowance

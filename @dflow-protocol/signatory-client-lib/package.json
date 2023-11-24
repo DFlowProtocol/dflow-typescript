@@ -1,6 +1,6 @@
 {
   "name": "@dflow-protocol/signatory-client-lib",
-  "version": "1.0.8",
+  "version": "1.1.0",
   "license": "SEE LICENSE IN LICENSE",
   "exports": {
     ".": {
@@ -12,11 +12,11 @@
     "./evm": {
       "default": "./dist/evm/index.js"
     },
-    "./evm/legacy": {
-      "default": "./dist/evm/legacy/index.js"
-    },
     "./evm/sponsored": {
       "default": "./dist/evm/sponsored/index.js"
+    },
+    "./evm/standard": {
+      "default": "./dist/evm/standard/index.js"
     },
     "./markets": {
       "default": "./dist/markets/index.js"
@@ -39,11 +39,11 @@
       "evm": [
         "./dist/evm/index.d.ts"
       ],
-      "evm/legacy": [
-        "./dist/evm/legacy/index.d.ts"
-      ],
       "evm/sponsored": [
         "./dist/evm/sponsored/index.d.ts"
+      ],
+      "evm/standard": [
+        "./dist/evm/standard/index.d.ts"
       ],
       "markets": [
         "./dist/markets/index.d.ts"

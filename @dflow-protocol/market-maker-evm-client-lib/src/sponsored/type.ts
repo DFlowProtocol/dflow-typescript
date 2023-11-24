@@ -1,14 +1,14 @@
 import { schemaEndorsement } from "@dflow-protocol/signatory-client-lib";
 import { SponsoredSwapFeeMode } from "@dflow-protocol/signatory-client-lib/evm/sponsored";
-import { schemaRFQOrderSignature } from "../common";
+import { schemaAddress, schemaRFQOrderSignature } from "../common";
 import { z } from "zod";
 
 export type IndicativeQuoteGetQuery = z.infer<typeof schemaIndicativeQuoteGetQuery>;
 export const schemaIndicativeQuoteGetQuery = z.object({
     /** Address of the ERC-20 token that the retail trader is sending */
-    sendToken: z.string(),
+    sendToken: schemaAddress,
     /** Address of the ERC-20 token that the retail trader is receiving */
-    receiveToken: z.string(),
+    receiveToken: schemaAddress,
     /** Minimum allowed fill price. Specified as token units sent to retail trader per token
      * received from retail trader */
     minFillPrice: z.string().regex(/^0$|^[1-9]\d*$/),
@@ -27,26 +27,26 @@ export type FirmQuotePostRequest = z.infer<typeof schemaFirmQuotePostRequest>;
 export const schemaFirmQuotePostRequest = z.object({
     /** Address of the ERC-20 token that the retail trader is sending. This is the `takerToken`
      * used to construct the 0x RFQ order. */
-    sendToken: z.string(),
+    sendToken: schemaAddress,
     /** Address of the ERC-20 token that the retail trader is receiving. This is the `makerToken`
      * used to construct the 0x RFQ order. */
-    receiveToken: z.string(),
+    receiveToken: schemaAddress,
     /** Send quantity specified as a scaled integer */
     sendQty: z.string().regex(/^[1-9]\d*$/),
     /** Minimum allowed fill quantity specified as a scaled integer */
     minFillQty: z.string().regex(/^0$|^[1-9]\d*$/),
     /** Address of the retail trader's wallet */
-    retailTrader: z.string(),
+    retailTrader: schemaAddress,
     endorsement: schemaEndorsement,
     /** `taker` to use when constructing the 0x RFQ order */
-    taker: z.string(),
+    taker: schemaAddress,
     /** Minimum allowed `expiry` for the 0x RFQ order. Number of seconds since
      * Jan 1, 1970 00:00:00 UTC. */
     minExpiry: z.number(),
     /** `chainId` to use when constructing the 0x RFQ order */
     chainId: z.number(),
     /** `verifyingContract` to use when constructing the 0x RFQ order */
-    verifyingContract: z.string(),
+    verifyingContract: schemaAddress,
     /** Reimbursement mode */
     reimbursementMode: z.nativeEnum(SponsoredSwapFeeMode),
     /** Max allowed transaction fee reimbursement in `sendToken`.
@@ -77,12 +77,12 @@ export const schemaFirmQuoteResponseOk = z.object({
     fillQty: z.string().regex(/^0$|^[1-9]\d*$/),
     /** Address of the market maker's wallet. This is the signer of the 0x RFQ order. This is the
      * `maker` used to construct the 0x RFQ order. */
-    maker: z.string().regex(/^0x[0-9a-fA-F]+$/),
+    maker: schemaAddress,
     /** Address of the tx origin. This is the address of the EOA that will send the transaction and
      * pay for gas. If sending transactions from multiple EOAs, this is the address of the EOA that
      * was used to register the allowed EOAs via registerAllowedRfqOrigins. See
      * https://docs.0xprotocol.org/en/latest/basics/functions.html#registerallowedrfqorigins */
-    txOrigin: z.string().regex(/^0x[0-9a-fA-F]+$/),
+    txOrigin: schemaAddress,
     /** `expiry` used to construct the 0x RFQ order. Formatted as a hex string. */
     expiry: z.string().regex(/^[0-9a-fA-F]+$/),
     /** `salt` used to construct the 0x RFQ order. Formatted as a hex string. */
