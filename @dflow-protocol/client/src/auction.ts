@@ -86,7 +86,7 @@ export class AuctionInfo extends AccountInfo<AuctionOrderFlowAuction> {
         }
         return BigInt(this.data.paymentInLieuLifetimeDeliveredNotionalSize);
     }
-    get feePayerMode(): SolanaFeePayerMode {
+    get feePayerMode(): EvmFeePayerMode | SolanaFeePayerMode {
         if (this.data.feePayerMode === undefined) {
             throw new Error("feePayerMode undefined");
         }
@@ -356,7 +356,7 @@ export type SolanaAuctionCreateTemplate = BaseAuctionCreateTemplate & {
 }
 
 export enum EvmFeePayerMode {
-    Legacy = 0,
+    Standard = 0,
     Sponsored = 1,
 }
 

@@ -9,8 +9,8 @@ import {
     MarketMakerAPIEVMContext,
     MarketMakerAPISolanaContext,
 } from "./context";
-import { MarketMakerAPIEVMLegacyRouter } from "./router/evmLegacyRouter";
 import { MarketMakerAPIEVMSponsoredRouter } from "./router/evmSponsoredRouter";
+import { MarketMakerAPIEVMStandardRouter } from "./router/evmStandardRouter";
 import { MarketMakerAPISolanaRouter } from "./router/solanaRouter";
 
 type MarketMakerServerParams = {
@@ -43,8 +43,8 @@ export class MarketMakerServer {
         if (evmContext) {
             const evmSponsoredAPI = new MarketMakerAPIEVMSponsoredRouter(context, evmContext);
             this.app.use(apiPath.evmSponsored, evmSponsoredAPI.router);
-            const evmLegacyAPI = new MarketMakerAPIEVMLegacyRouter(context, evmContext);
-            this.app.use(apiPath.evmLegacy, evmLegacyAPI.router);
+            const evmAPI = new MarketMakerAPIEVMStandardRouter(context, evmContext);
+            this.app.use(apiPath.evm, evmAPI.router);
         }
 
         this.app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
@@ -71,7 +71,7 @@ export class MarketMakerServer {
 export const apiPath = {
     healthCheck: "/health-check",
     solana: "/solana",
-    evmLegacy: "/evm/legacy",
+    evm: "/evm",
     evmSponsored: "/evm/sponsored",
 } as const;
 

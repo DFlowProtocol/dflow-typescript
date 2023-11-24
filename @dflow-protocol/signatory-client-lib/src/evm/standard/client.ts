@@ -1,4 +1,4 @@
-import { apiBasePath, flowApiPaths, evmLegacyBasePath } from "../../api-path";
+import { apiBasePath, flowApiPaths, evmStandardBasePath } from "../../api-path";
 import { ErrorResponse } from "../../error";
 import {
     FirmQuoteRequest,
@@ -105,5 +105,5 @@ export async function reportTransaction(
 }
 
 function makeURL(signatoryServerURL: string, endpoint: string): string {
-    return `${signatoryServerURL}${apiBasePath}${evmLegacyBasePath}${endpoint}`;
+    return `${signatoryServerURL}${apiBasePath}${evmStandardBasePath}${endpoint}`;
 }

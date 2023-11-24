@@ -6,8 +6,8 @@ import {
     PaymentInLieuToken,
 } from "@dflow-protocol/signatory-client-lib";
 import { NATIVE_TOKEN_ADDRESS } from "@dflow-protocol/signatory-client-lib/evm";
-import * as EVMLegacyClient from "@dflow-protocol/signatory-client-lib/evm/legacy";
 import * as EVMSponsoredClient from "@dflow-protocol/signatory-client-lib/evm/sponsored";
+import * as EVMStandardClient from "@dflow-protocol/signatory-client-lib/evm/standard";
 import * as SolanaClient from "@dflow-protocol/signatory-client-lib/solana";
 import { BN } from "@project-serum/anchor";
 import { Connection, Keypair, Transaction } from "@solana/web3.js";
@@ -338,7 +338,7 @@ export class FlowSimulator {
             wethContractAddress,
         } = evmParams;
 
-        const firmQuoteRequest: EVMLegacyClient.FirmQuoteRequest = {
+        const firmQuoteRequest: EVMStandardClient.FirmQuoteRequest = {
             chainId: params.chainId,
             sendToken: params.sendToken,
             receiveToken: params.receiveToken,
@@ -347,23 +347,23 @@ export class FlowSimulator {
             endorsement: params.endorsement,
         };
         this.info(params.id, "Firm quote request", JSON.stringify(firmQuoteRequest));
-        const firmQuoteResponse = await EVMLegacyClient.getFirmQuote(
+        const firmQuoteResponse = await EVMStandardClient.getFirmQuote(
             this.params.signatoryServerURL,
             firmQuoteRequest,
         );
         this.info(params.id, "Firm quote response", firmQuoteResponse);
         switch (firmQuoteResponse.type) {
-            case EVMLegacyClient.FirmQuoteResponseType.Ok: {
+            case EVMStandardClient.FirmQuoteResponseType.Ok: {
                 break;
             }
-            case EVMLegacyClient.FirmQuoteResponseType.PaymentInLieu: {
+            case EVMStandardClient.FirmQuoteResponseType.PaymentInLieu: {
                 await this.handlePaymentInLieuOffer({
                     id: params.id,
                     paymentInLieuToken: firmQuoteResponse.data.paymentInLieuToken,
                 });
                 return;
             }
-            case EVMLegacyClient.FirmQuoteResponseType.Unavailable: {
+            case EVMStandardClient.FirmQuoteResponseType.Unavailable: {
                 this.error(params.id, "Firm quote unavailable");
                 return;
             }
@@ -448,20 +448,20 @@ export class FlowSimulator {
         this.info(params.id, "Tx receipt", receipt);
 
         if (receipt?.status === 1) {
-            const reportTxRequest: EVMLegacyClient.ReportTransactionRequest = {
+            const reportTxRequest: EVMStandardClient.ReportTransactionRequest = {
                 txHash: sendTransactionResult.hash,
                 requestId: firmQuote.requestId,
             };
             this.info(params.id, "Report transaction request", JSON.stringify(reportTxRequest));
-            const reportTxResponse = await EVMLegacyClient.reportTransaction(
+            const reportTxResponse = await EVMStandardClient.reportTransaction(
                 this.params.signatoryServerURL,
                 reportTxRequest,
             );
             switch (reportTxResponse.type) {
-                case EVMLegacyClient.ReportTransactionResponseType.Paid: {
+                case EVMStandardClient.ReportTransactionResponseType.Paid: {
                     break;
                 }
-                case EVMLegacyClient.ReportTransactionResponseType.NotPaid: {
+                case EVMStandardClient.ReportTransactionResponseType.NotPaid: {
                     throw new Error("Payment was not made");
                 }
                 default: {

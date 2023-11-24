@@ -47,7 +47,7 @@ async function main(): Promise<void> {
     const auctions: AuctionCreateTemplate[] = [
         {
             network: "evm1",
-            feePayerMode: EvmFeePayerMode.Legacy,
+            feePayerMode: EvmFeePayerMode.Standard,
             maxDeliveryPeriod: oneHourMillis,
             minimumOrderSize:      1_00, //       $1.00
             maximumOrderSize:   5000_00, //   $5,000.00

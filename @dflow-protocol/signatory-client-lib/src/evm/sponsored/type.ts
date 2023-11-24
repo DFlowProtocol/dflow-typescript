@@ -1,3 +1,4 @@
+import { schemaAddress } from "../common";
 import { liquidityUnavailableReason } from "../../common";
 import { schemaEndorsement } from "../../endorsement";
 import { schemaPaymentInLieuToken } from "../../paymentInLieu";
@@ -7,10 +8,10 @@ export type IndicativeQuoteRequest = z.infer<typeof schemaIndicativeQuoteRequest
 export const schemaIndicativeQuoteRequest = z.object({
     chainId: z.number(),
     /** Address of the ERC-20 token sent by the retail trader. */
-    sendToken: z.string(),
+    sendToken: schemaAddress,
     /** Address of the ERC-20 token received by the retail trader. For native ETH, this is
      * 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee. */
-    receiveToken: z.string(),
+    receiveToken: schemaAddress,
     /** Send quantity specified as a scaled integer */
     sendQty: z.string().regex(/^[1-9]\d*$/),
     /** DFlow network public key identifying the order flow source. */
@@ -93,10 +94,10 @@ export type FirmQuoteRequest = z.infer<typeof schemaFirmQuoteRequest>;
 export const schemaFirmQuoteRequest = z.object({
     chainId: z.number(),
     /** Address of the ERC-20 token sent by the retail trader. */
-    sendToken: z.string(),
+    sendToken: schemaAddress,
     /** Address of the ERC-20 token received by the retail trader. For native ETH, this is
      * 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee. */
-    receiveToken: z.string(),
+    receiveToken: schemaAddress,
     /** Send quantity specified as a scaled integer */
     sendQty: z.string().regex(/^[1-9]\d*$/),
     /** DFlow network public key identifying the order flow source. */
