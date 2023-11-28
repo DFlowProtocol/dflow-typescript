@@ -109,6 +109,11 @@ export type EvmOrderConfig = z.infer<typeof evmOrderConfigSchema>;
 const evmOrderConfigSchema = z.object({
     ...baseOrderConfig,
     network: evmNetwork,
+    gaslessApprovalMode: z.optional(z.union([
+        z.literal("2612"),
+        z.literal("ExecuteMetaTransaction"),
+        z.literal("Permit2"),
+    ])),
     sponsoredSwap: z.optional(sponsoredSwapParams),
 });
 

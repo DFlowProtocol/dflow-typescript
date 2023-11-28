@@ -1,4 +1,9 @@
-import { schemaAddress, schemaEip712TypedDataWithMessage } from "../common";
+import {
+    schemaAddress,
+    schemaBytes32,
+    schemaEip712TypedDataWithMessage,
+    schemaHexBytes,
+} from "../common";
 import { liquidityUnavailableReason } from "../../common";
 import { schemaEndorsement } from "../../endorsement";
 import { schemaPaymentInLieuToken } from "../../paymentInLieu";
@@ -37,7 +42,7 @@ export const schemaIndicativeQuoteOkResponse = z.object({
         auctionEpoch: z.number(),
         /** The allowance target that would be returned for a firm quote request with the same
          * parameters */
-        allowanceTarget: z.nullable(z.string()),
+        allowanceTarget: z.nullable(schemaAddress),
     }),
 });
 
@@ -89,7 +94,7 @@ export const schemaTransactionInfo = z.object({
      * sent from any EOA. */
     from: z.optional(schemaAddress),
     to: schemaAddress,
-    data: z.string(),
+    data: schemaHexBytes,
     value: z.string(),
 });
 
@@ -112,6 +117,25 @@ export const schemaSignatoryRequestID = z.object({
     orderHash: z.string(),
 }).passthrough();
 
+type AbiInput = z.infer<typeof baseAbiInput> & {
+    components?: AbiInput[];
+};
+const baseAbiInput = z.object({
+    type: z.string(),
+    name: z.string(),
+});
+const schemaAbiInput: z.ZodType<AbiInput> = baseAbiInput.extend({
+    components: z.optional(z.array(z.lazy(() => schemaAbiInput))),
+});
+export type Abi = z.infer<typeof schemaAbi>;
+export const schemaAbi = z.object({
+    type: z.string(),
+    name: z.string(),
+    constant: z.boolean(),
+    payable: z.boolean(),
+    inputs: z.array(schemaAbiInput),
+});
+
 export type FirmQuoteOkResponse = z.infer<typeof schemaFirmQuoteOkResponse>;
 export const schemaFirmQuoteOkResponse = z.object({
     type: z.literal(FirmQuoteResponseType.Ok),
@@ -119,14 +143,22 @@ export const schemaFirmQuoteOkResponse = z.object({
         /** The transaction. The client is responsible for populating the transaction's nonce and
          * gas parameters. */
         tx: schemaTransactionInfo,
-        /** The DFlowSwap contract method to use to fill the order */
-        method: z.string(),
-        /** `order` to use when calling the DFlowSwap contract fill method */
+        /** Address of the EOA allowed to send the transaction. If null, any EOA may send the
+         * transaction. */
+        txOrigin: z.nullable(schemaAddress),
+        /** Address of the account allowed to call the DFlowSwap contract to fill the order */
+        msgSender: schemaAddress,
+        /** The ABI of the DFlowSwap contract method to use to fill the order */
+        methodAbi: schemaAbi,
+        /** `order` to use when calling the DFlowSwap contract fill method specified by
+         * `methodAbi` */
         order: z.record(z.string(), z.string()),
-        /** `r` value to use when calling the DFlowSwap contract fill method */
-        r: z.string(),
-        /** `vs` value to use when calling the DFlowSwap contract fill method */
-        vs: z.string(),
+        /** `r` value to use when calling the DFlowSwap contract fill method specified by
+         * `methodAbi` */
+        r: schemaBytes32,
+        /** `vs` value to use when calling the DFlowSwap contract fill method specified by
+         * `methodAbi` */
+        vs: schemaBytes32,
         /** Gasless approval transaction fields. Not specified if the retail trader is sending
          * native ETH. */
         gaslessApprovalTx: z.optional(z.object({
@@ -135,35 +167,54 @@ export const schemaFirmQuoteOkResponse = z.object({
              * granting an allowance to the DFlowSwap contract before sending the transaction.
              * Specified if and only if the sendToken supports ERC-2612. */
             erc2612: z.optional(z.object({
-                /** The DFlowSwap contract method to use to fill the order */
-                method: z.string(),
                 /** The ABI of the DFlowSwap contract method to use to fill the order */
-                methodAbi: z.string(),
+                methodAbi: schemaAbi,
+                /** `nonce` value to use in the `permit` argument when calling the DFlowSwap
+                 * contract method specified by `methodAbi`. If specified, this value must be
+                 * included as a uint32 in the first four, higher-order bytes of the `permit`
+                 * argument. */
+                nonce: z.optional(z.number().int().nonnegative()),
                 /** The ERC-2612 permit to sign */
+                eip712: schemaEip712TypedDataWithMessage,
+            })),
+            /** If the sendToken supports executeMetaTransaction, the client can use these fields to
+             * construct a DFlowSwap transaction that allows the retail trader to execute the swap
+             * without granting an allowance to the DFlowSwap contract before sending the
+             * transaction. Specified if and only if the sendToken supports
+             * executeMetaTransaction. */
+            executeMetaTransaction: z.optional(z.object({
+                /** The ABI of the DFlowSwap contract method to use to fill the order */
+                methodAbi: schemaAbi,
+                /** `functionSignature` value to use when calling the DFlowSwap contract method
+                 * specified by `methodAbi` */
+                functionSignature: schemaHexBytes,
+                /** `fillOrderCalldata` value to use when calling the DFlowSwap contract method
+                 * specified by `methodAbi` */
+                fillOrderCalldata: schemaHexBytes,
+                /** The meta transaction to sign */
                 eip712: schemaEip712TypedDataWithMessage,
             })),
             /** The client can use these fields to construct a DFlowSwap transaction that allows the
              * retail trader to execute the swap without granting an allowance to the DFlowSwap
              * contract before sending the transaction. Note that the retail trader needs to grant
              * an allowance to the Permit2 contract before this method can be used. */
-            permit2: z.object({
+            permit2: z.optional(z.object({
                 /** The address of the Permit2 contract for which the retail trader needs to have an
                  * allowance for the send token in order to use this gasless approval method. */
-                permit2AllowanceTarget: z.string(),
-                /** The DFlowSwap contract method to use to fill the order */
-                method: z.string(),
+                permit2AllowanceTarget: schemaAddress,
                 /** The ABI of the DFlowSwap contract method to use to fill the order */
-                methodAbi: z.string(),
-                /** `permitNonce` value to use when calling the DFlowSwap contract fill method */
+                methodAbi: schemaAbi,
+                /** `permitNonce` value to use when calling the DFlowSwap contract fill method
+                 * specified by `methodAbi` */
                 permitNonce: z.string(),
                 /** The Permit2 SignatureTransfer to sign */
                 eip712: schemaEip712TypedDataWithMessage,
-            }),
+            })),
         })),
         /** The contract address for which the retail trader needs to have an allowance for the send
          * token for the transaction to be processed if not using a gasless approval transaction. If
          * null, then the transaction does not require an allowance from the retail trader. */
-        allowanceTarget: z.nullable(z.string()),
+        allowanceTarget: z.nullable(schemaAddress),
         /** The last block timestamp at which the transaction can be processed. */
         lastValidBlockTimestamp: z.string(),
         /** Send quantity specified as a scaled integer */
@@ -174,14 +225,14 @@ export const schemaFirmQuoteOkResponse = z.object({
         minFillQty: z.string(),
         /** Platform fee info. Only included if a platform fee was applied to the transaction. */
         platformFee: z.optional(z.object({
-            receiver: z.string(),
+            receiver: schemaAddress,
             /** Platform fee quantity specified as a scaled integer. Note that this is
              * already factored into the `receiveQty`. */
             qty: z.string(),
             bps: z.number(),
             /** Address of the ERC-20 token in which the platform fee will be paid. For native ETH,
              * this is 0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee. */
-            token: z.string(),
+            token: schemaAddress,
         })),
         /** Time at which the DBBO was calculated */
         dbboTime: z.number(),
