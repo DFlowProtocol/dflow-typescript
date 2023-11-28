@@ -5,7 +5,10 @@ import {
     acceptPaymentInLieu,
     PaymentInLieuToken,
 } from "@dflow-protocol/signatory-client-lib";
-import { NATIVE_TOKEN_ADDRESS } from "@dflow-protocol/signatory-client-lib/evm";
+import {
+    Eip712ObjectProperty,
+    NATIVE_TOKEN_ADDRESS,
+} from "@dflow-protocol/signatory-client-lib/evm";
 import * as EVMSponsoredClient from "@dflow-protocol/signatory-client-lib/evm/sponsored";
 import * as EVMStandardClient from "@dflow-protocol/signatory-client-lib/evm/standard";
 import * as SolanaClient from "@dflow-protocol/signatory-client-lib/solana";
@@ -219,6 +222,7 @@ export class FlowSimulator {
                                 sendQty: orderConfig.sendQty,
                                 orderFlowSource: orderFlowSource,
                                 endorsement,
+                                gaslessApprovalMode: orderConfig.gaslessApprovalMode,
                                 assertBalances: orderConfig.assertBalances,
                             });
                         }
@@ -332,6 +336,10 @@ export class FlowSimulator {
             throw new Error(`No EVM config for chain ID ${params.chainId}`);
         }
 
+        if (params.gaslessApprovalMode !== undefined && params.sendToken === NATIVE_TOKEN_ADDRESS) {
+            throw new Error("Gasless approval not supported for native token");
+        }
+
         const {
             provider,
             wallet: retailTraderWallet,
@@ -374,29 +382,130 @@ export class FlowSimulator {
         }
 
         const firmQuote = firmQuoteResponse.data;
-        const allowanceTarget = firmQuote.allowanceTarget;
-        const allowanceToken = params.sendToken.toLowerCase() === NATIVE_TOKEN_ADDRESS
-            ? null
-            : params.sendToken;
-        if (allowanceTarget && allowanceToken) {
-            const token = new ethers.Contract(allowanceToken, ERC20ABI, retailTraderWallet);
-            const currentAllowance = await token.allowance(
-                retailTraderWallet.address,
-                allowanceTarget,
-            );
-            if (currentAllowance === BigInt(0)) {
-                this.info(
-                    params.id,
-                    `Sending approve tx for token ${allowanceToken}, spender ${allowanceTarget}`,
-                );
-                const unlimitedAllowance = BigInt(2) ** BigInt(256) - BigInt(1);
-                // Race to avoid blocking forever if approve tx isn't processed
-                const approveTx = await Promise.race([
-                    token.approve(allowanceTarget, unlimitedAllowance),
-                    sleep(5_000).then(() => { throw new Error("Approve tx timed out"); }),
-                ]);
-                this.info(params.id, "approve tx", approveTx);
+
+        let fillTx: ethers.TransactionRequest;
+        if (params.gaslessApprovalMode === undefined) {
+            if (firmQuote.allowanceTarget) {
+                await this.grantMaxAllowanceIfNeeded({
+                    orderWorkerId: params.id,
+                    target: firmQuote.allowanceTarget,
+                    token: params.sendToken,
+                    from: retailTraderWallet,
+                });
             }
+            fillTx = firmQuote.tx;
+        } else if (params.gaslessApprovalMode === "2612") {
+            const erc2612Params = firmQuote.gaslessApprovalTx?.erc2612;
+            if (!erc2612Params) {
+                throw new Error("Firm quote response did not include ERC-2612 gasless approval");
+            }
+            // Ethers signTypedData doesn't allow the EIP712Domain type to be specified in the types
+            const { domain, types, message } = erc2612Params.eip712;
+            const typesWithoutEip712Domain = Object.keys(types).reduce((acc, key) => {
+                if (key !== "EIP712Domain") {
+                    acc[key] = types[key];
+                }
+                return acc;
+            }, {} as Record<string, Eip712ObjectProperty[]>);
+            const permitSignatureRaw = await retailTraderWallet.signTypedData(
+                domain,
+                typesWithoutEip712Domain,
+                message,
+            );
+            const permitSignature = ethers.Signature.from(permitSignatureRaw);
+            const permitArg = erc2612Params.nonce !== undefined
+                ? "0x" + erc2612Params.nonce.toString(16).padStart(8, "0")
+                        + permitSignature.compactSerialized.slice(2)
+                : permitSignature.compactSerialized;
+            const fillParams = [
+                firmQuote.order,
+                firmQuote.r,
+                firmQuote.vs,
+                permitArg,
+            ];
+            const dflowSwapContract = new ethers.Contract(
+                firmQuote.tx.to,
+                [erc2612Params.methodAbi],
+                retailTraderWallet,
+            );
+            fillTx = await dflowSwapContract[erc2612Params.methodAbi.name]
+                .populateTransaction(...fillParams);
+        } else if (params.gaslessApprovalMode === "ExecuteMetaTransaction") {
+            const executeMetaTxParams = firmQuote.gaslessApprovalTx?.executeMetaTransaction;
+            if (!executeMetaTxParams) {
+                throw new Error(
+                    "Firm quote response did not include executeMetaTransaction gasless approval"
+                );
+            }
+            // Ethers signTypedData doesn't allow the EIP712Domain type to be specified in the types
+            const { domain, types, message } = executeMetaTxParams.eip712;
+            const typesWithoutEip712Domain = Object.keys(types).reduce((acc, key) => {
+                if (key !== "EIP712Domain") {
+                    acc[key] = types[key];
+                }
+                return acc;
+            }, {} as Record<string, Eip712ObjectProperty[]>);
+            const metaTransactionSignatureRaw = await retailTraderWallet.signTypedData(
+                domain,
+                typesWithoutEip712Domain,
+                message,
+            );
+            const metaTransactionSignature = ethers.Signature.from(metaTransactionSignatureRaw);
+            const fillParams = [
+                params.sendToken,
+                executeMetaTxParams.functionSignature,
+                metaTransactionSignature.r,
+                metaTransactionSignature.yParityAndS,
+                executeMetaTxParams.fillOrderCalldata,
+            ];
+            const dflowSwapContract = new ethers.Contract(
+                firmQuote.tx.to,
+                [executeMetaTxParams.methodAbi],
+                retailTraderWallet,
+            );
+            fillTx = await dflowSwapContract[executeMetaTxParams.methodAbi.name]
+                .populateTransaction(...fillParams);
+        } else if (params.gaslessApprovalMode === "Permit2") {
+            const permit2Params = firmQuote.gaslessApprovalTx?.permit2;
+            if (!permit2Params) {
+                throw new Error("Firm quote response did not include Permit2 gasless approval");
+            }
+            await this.grantMaxAllowanceIfNeeded({
+                orderWorkerId: params.id,
+                target: permit2Params.permit2AllowanceTarget,
+                token: params.sendToken,
+                from: retailTraderWallet,
+            });
+            // Ethers signTypedData doesn't allow the EIP712Domain type to be specified in the types
+            const { domain, types, message } = permit2Params.eip712;
+            const typesWithoutEip712Domain = Object.keys(types).reduce((acc, key) => {
+                if (key !== "EIP712Domain") {
+                    acc[key] = types[key];
+                }
+                return acc;
+            }, {} as Record<string, Eip712ObjectProperty[]>);
+            const permit2SignatureRaw = await retailTraderWallet.signTypedData(
+                domain,
+                typesWithoutEip712Domain,
+                message,
+            );
+            const permit2Signature = ethers.Signature.from(permit2SignatureRaw);
+            const fillParams = [
+                firmQuote.order,
+                firmQuote.r,
+                firmQuote.vs,
+                permit2Params.permitNonce,
+                permit2Signature.compactSerialized,
+            ];
+            const dflowSwapContract = new ethers.Contract(
+                firmQuote.tx.to,
+                [permit2Params.methodAbi],
+                retailTraderWallet,
+            );
+            fillTx = await dflowSwapContract[permit2Params.methodAbi.name]
+                .populateTransaction(...fillParams);
+        } else {
+            throw new Error(`Unsupported gasless approval mode ${params.gaslessApprovalMode}`);
         }
 
         const hasPlatformFee = firmQuote.platformFee;
@@ -432,16 +541,14 @@ export class FlowSimulator {
             hasPlatformFee ? provider.getBalance(fr) : BigInt(0),
         ]);
 
-        const [nonce, feeData, estimatedGas] = await Promise.all([
+        const [nonce, feeData] = await Promise.all([
             retailTraderWallet.getNonce(),
             provider.getFeeData(),
-            provider.estimateGas(firmQuote.tx),
         ]);
         const sendTransactionResult = await retailTraderWallet.sendTransaction({
-            ...firmQuote.tx,
+            ...fillTx,
             nonce,
             maxFeePerGas: feeData.maxFeePerGas,
-            gasLimit: estimatedGas,
         });
 
         const receipt = await provider.waitForTransaction(sendTransactionResult.hash);
@@ -644,29 +751,16 @@ export class FlowSimulator {
 
         const firmQuote = firmQuoteResponse.data;
         const allowanceTarget = firmQuote.allowanceTarget;
-        const paramSendToken = params.sendToken;
-        const allowanceToken = paramSendToken.toLowerCase() === NATIVE_TOKEN_ADDRESS
+        const allowanceToken = params.sendToken.toLowerCase() === NATIVE_TOKEN_ADDRESS
             ? null
-            : paramSendToken;
+            : params.sendToken;
         if (allowanceTarget && allowanceToken) {
-            const token = new ethers.Contract(allowanceToken, ERC20ABI, retailTraderWallet);
-            const currentAllowance = await token.allowance(
-                retailTraderWallet.address,
-                allowanceTarget,
-            );
-            if (currentAllowance === BigInt(0)) {
-                this.info(
-                    params.id,
-                    `Sending approve tx for token ${allowanceToken}, spender ${allowanceTarget}`,
-                );
-                const unlimitedAllowance = BigInt(2) ** BigInt(256) - BigInt(1);
-                // Race to avoid blocking forever if approve tx isn't processed
-                const approveTx = await Promise.race([
-                    token.approve(allowanceTarget, unlimitedAllowance),
-                    sleep(5_000).then(() => { throw new Error("Approve tx timed out"); }),
-                ]);
-                this.info(params.id, "approve tx", approveTx);
-            }
+            await this.grantMaxAllowanceIfNeeded({
+                orderWorkerId: params.id,
+                target: allowanceTarget,
+                token: allowanceToken,
+                from: retailTraderWallet,
+            });
         }
 
         const hasPlatformFee = firmQuote.platformFee;
@@ -829,6 +923,27 @@ export class FlowSimulator {
         }
     }
 
+    private async grantMaxAllowanceIfNeeded(params: GrantAllowanceParams) {
+        const token = new ethers.Contract(params.token, ERC20ABI, params.from);
+        const currentAllowance = await token.allowance(
+            params.from.address,
+            params.target,
+        );
+        if (currentAllowance === BigInt(0)) {
+            this.info(
+                params.orderWorkerId,
+                `Sending approve tx for token ${params.token}, spender ${params.target}`,
+            );
+            const unlimitedAllowance = BigInt(2) ** BigInt(256) - BigInt(1);
+            // Race to avoid blocking forever if approve tx isn't processed
+            const approveTx = await Promise.race([
+                token.approve(params.target, unlimitedAllowance),
+                sleep(5_000).then(() => { throw new Error("Approve tx timed out"); }),
+            ]);
+            this.info(params.orderWorkerId, "approve tx", approveTx);
+        }
+    }
+
     private async handlePaymentInLieuOffer(params: HandlePaymentInLieuParams): Promise<void> {
         const paymentInLieuToken = params.paymentInLieuToken;
         const approval = await EndorsementClient.getPaymentInLieuApproval(
@@ -887,6 +1002,7 @@ type EVMOrderParams = {
     sendQty: string
     orderFlowSource: string
     endorsement: Endorsement
+    gaslessApprovalMode?: "2612" | "ExecuteMetaTransaction" | "Permit2"
     assertBalances?: boolean
 }
 
@@ -900,6 +1016,13 @@ type EVMSponsoredOrderParams = {
     orderFlowSource: string
     endorsement: Endorsement
     assertBalances?: boolean
+}
+
+type GrantAllowanceParams = {
+    orderWorkerId: string
+    target: string
+    token: string
+    from: ethers.Wallet
 }
 
 type HandlePaymentInLieuParams = {

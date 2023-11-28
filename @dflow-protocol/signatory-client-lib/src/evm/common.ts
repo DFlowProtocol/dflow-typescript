@@ -4,6 +4,10 @@ export const NATIVE_TOKEN_ADDRESS = "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
 
 export const schemaAddress = z.string().regex(/^0x[0-9a-fA-F]{40}$/);
 
+export const schemaBytes32 = z.string().regex(/^0x[0-9a-fA-F]{64}$/);
+
+export const schemaHexBytes = z.string().regex(/^0x[0-9a-fA-F]*$/);
+
 export type Eip712ObjectProperty = z.infer<typeof schemaEip712ObjectProperty>;
 export const schemaEip712ObjectProperty = z.object({
     name: z.string(),
