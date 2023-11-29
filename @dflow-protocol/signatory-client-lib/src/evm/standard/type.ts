@@ -134,6 +134,8 @@ export const schemaAbi = z.object({
     constant: z.boolean(),
     payable: z.boolean(),
     inputs: z.array(schemaAbiInput),
+    outputs: z.array(schemaAbiInput),
+    stateMutability: z.optional(z.string()),
 });
 
 export type FirmQuoteOkResponse = z.infer<typeof schemaFirmQuoteOkResponse>;
