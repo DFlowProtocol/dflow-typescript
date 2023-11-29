@@ -38,7 +38,3 @@ export const schemaEip712TypedDataWithMessage = z.object({
     primaryType: z.string(),
     message: z.any(),
 });
-
-export const schemaGaslessApproval = z.object({
-    eip712: schemaEip712TypedDataWithMessage,
-});
