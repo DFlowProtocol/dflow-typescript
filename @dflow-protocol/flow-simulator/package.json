@@ -10,12 +10,12 @@
     "start": "node ./dist/main.js"
   },
   "dependencies": {
-    "@cosmjs/proto-signing": "0.27.0",
+    "@cosmjs/proto-signing": "^0.32.1",
     "@dflow-protocol/client": "*",
-    "@dflow-protocol/endorsement-client-lib": "^0.5.0",
+    "@dflow-protocol/endorsement-client-lib": "^0.6.0",
     "@dflow-protocol/signatory-client-lib": "*",
     "@project-serum/anchor": "^0.25.0",
-    "@solana/web3.js": "^1.73.2",
+    "@solana/web3.js": "^1.87.6",
     "chai": "^4.3.6",
     "commander": "^9.4.0",
     "ethers": "^6.9.0",

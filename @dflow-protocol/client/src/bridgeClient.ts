@@ -1,4 +1,4 @@
-import { encodeSecp256k1Pubkey, pubkeyToAddress } from "@cosmjs/launchpad";
+import { encodeSecp256k1Pubkey, pubkeyToAddress } from "@cosmjs/amino";
 import { AccountData } from "@cosmjs/proto-signing";
 import { logs } from "@cosmjs/stargate";
 import {
@@ -155,18 +155,25 @@ export class BridgeClient {
                 `Error when processing withdrawal request. Code ${result.code}.`
             );
         }
-        const parsed = logs.parseRawLog(result.rawLog);
-        if (parsed.length !== 1) {
-            throw new Error("Failed to parse withdrawal ID. Invalid log length.");
+        if (result.msgResponses.length !== 1) {
+            throw new Error(
+                "Failed to parse withdrawal ID. Transaction contains multiple messages."
+            );
         }
-        const initWithdrawCeremonyEvent = parsed[0].events
-            .find(x => x.type === "dflow.bridge.InitWithdrawCeremony");
-        if (initWithdrawCeremonyEvent === undefined) {
+        const initWithdrawCeremonyEvents = result.events
+            .filter(x => x.type === "dflow.bridge.InitWithdrawCeremony");
+        if (initWithdrawCeremonyEvents.length === 0) {
             throw new Error(
                 "Failed to parse withdrawal ID. Did not find InitWithdrawCeremony event."
             );
         }
-        const rawWithdrawalId = initWithdrawCeremonyEvent.attributes
+        if (initWithdrawCeremonyEvents.length > 1) {
+            throw new Error(
+                "Failed to parse withdrawal ID. Transaction contains multiple InitWithdrawCeremony"
+                + " events."
+            );
+        }
+        const rawWithdrawalId = initWithdrawCeremonyEvents[0].attributes
             .find(x => x.key === "wid")
             ?.value;
         if (rawWithdrawalId === undefined || rawWithdrawalId === "") {

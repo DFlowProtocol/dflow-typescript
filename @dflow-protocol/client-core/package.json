@@ -1,6 +1,6 @@
 {
   "name": "@dflow-protocol/client-core",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "license": "SEE LICENSE IN LICENSE",
   "module": "./dist/index.js",
   "main": "./dist/index.js",
@@ -14,15 +14,15 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@cosmjs/launchpad": "0.27.0",
-    "@cosmjs/proto-signing": "0.27.0",
-    "@cosmjs/stargate": "0.27.0",
+    "@cosmjs/amino": "^0.32.1",
+    "@cosmjs/proto-signing": "^0.32.1",
+    "@cosmjs/stargate": "^0.32.1",
     "buffer": "^6.0.3"
   },
   "peerDependencies": {
-    "@cosmjs/launchpad": "0.27.0",
-    "@cosmjs/proto-signing": "0.27.0",
-    "@cosmjs/stargate": "0.27.0"
+    "@cosmjs/amino": "^0.32.1",
+    "@cosmjs/proto-signing": "^0.32.1",
+    "@cosmjs/stargate": "^0.32.1"
   },
   "devDependencies": {
     "typescript": "^4.8.3"
