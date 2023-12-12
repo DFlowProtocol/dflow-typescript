@@ -1,5 +1,5 @@
 import { AccountData } from "@cosmjs/amino";
-import { EncodeObject, OfflineDirectSigner, Registry } from "@cosmjs/proto-signing";
+import { EncodeObject, OfflineSigner, Registry } from "@cosmjs/proto-signing";
 // Fix
 // The inferred type of 'client' cannot be named without a reference to
 // 'dflow-client-ts/node_modules/@cosmjs/stargate'.
@@ -37,7 +37,7 @@ export type ClientMsgCallbacks = {
 
 export class DFlowClient {
     readonly client;
-    readonly signer: OfflineDirectSigner;
+    readonly signer: OfflineSigner;
     readonly apiURL: string;
     readonly rpcURL: string;
 
@@ -51,7 +51,7 @@ export class DFlowClient {
 
     /** Construct a DFlow Client, which can be used to query the network and send transactions.
      * Note that you must also call `init()` if using the client to send transactions. */
-    constructor(apiURL: string, rpcURL: string, signer: OfflineDirectSigner) {
+    constructor(apiURL: string, rpcURL: string, signer: OfflineSigner) {
         this.signer = signer;
         this.apiURL = apiURL;
         this.rpcURL = rpcURL;
