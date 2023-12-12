@@ -1,6 +1,6 @@
 {
   "name": "@dflow-protocol/client",
-  "version": "0.5.4",
+  "version": "0.5.5",
   "license": "SEE LICENSE IN LICENSE",
   "module": "./dist/index.js",
   "main": "./dist/index.js",
@@ -16,21 +16,21 @@
     "lint": "eslint src"
   },
   "dependencies": {
-    "@cosmjs/launchpad": "0.27.0",
-    "@cosmjs/proto-signing": "0.27.0",
-    "@cosmjs/stargate": "0.27.0",
+    "@cosmjs/amino": "^0.32.1",
+    "@cosmjs/proto-signing": "^0.32.1",
+    "@cosmjs/stargate": "^0.32.1",
     "@dflow-protocol/bridge-sdk": "1.0.0",
-    "@dflow-protocol/client-core": "0.5.0",
+    "@dflow-protocol/client-core": "0.5.1",
     "@project-serum/anchor": "^0.25.0",
     "@solana/spl-token": "^0.3.8",
-    "@solana/web3.js": "^1.73.2",
+    "@solana/web3.js": "^1.87.6",
     "bn.js": "^5.2.1",
     "bs58": "^5.0.0"
   },
   "peerDependencies": {
-    "@cosmjs/launchpad": "0.27.0",
-    "@cosmjs/proto-signing": "0.27.0",
-    "@cosmjs/stargate": "0.27.0"
+    "@cosmjs/amino": "^0.32.1",
+    "@cosmjs/proto-signing": "^0.32.1",
+    "@cosmjs/stargate": "^0.32.1"
   },
   "devDependencies": {
     "@types/bn.js": "^5.1.1",

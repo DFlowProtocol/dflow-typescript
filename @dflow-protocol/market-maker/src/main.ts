@@ -17,7 +17,6 @@ import {
     MarketMakerEVMChainContext,
     MarketMakerAPIEVMContext,
 } from "./context";
-import Decimal from "decimal.js";
 import { ethers } from "ethers";
 import { Bidder } from "./lib/bidder";
 import { AllowanceGranter } from "./lib/evm/allowanceGranter";
@@ -27,12 +26,6 @@ import { MarketMakerServer, apiPath } from "./server";
 import "source-map-support/register"
 
 async function main(opts: any): Promise<void> {
-    Decimal.set({
-        precision: 100,
-        toExpPos: 100,
-        toExpNeg: -100,
-    });
-
     const rawConfig = JSON.parse(fs.readFileSync(opts.config, "utf-8"));
     const config = marketMakerConfig.parse(rawConfig);
 
