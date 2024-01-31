@@ -92,10 +92,7 @@ export type SignatoryRequestIdentifier = z.infer<typeof schemaSignatoryRequestID
 export const schemaSignatoryRequestID = z.object({
     /** Base64-encoded Ed25519 signature of
      *  `"{id},{retailTrader},{notional},{auctionId},{auctionEpoch},{marketMakerURL},{quoteId},
-     *    ,{endorsement},{lastValidBlockHeight},{lastAllowedBlockHeight}
-     *    ,{txMessage}"`.
-     *  The txMessage is equal to `Transaction.serializeMessage().toString("base64")` or
-     * `VersionedTransaction.message.serialize().toString("base64")`. */
+     *    ,{endorsement},{lastValidBlockHeight},{lastAllowedBlockHeight},{tx}"` */
     signature: z.string(),
     /** Unique identifier for the request. */
     id: z.string(),
@@ -108,6 +105,7 @@ export const schemaSignatoryRequestID = z.object({
     endorsement: schemaEndorsement,
     lastValidBlockHeight: z.number(),
     lastAllowedBlockHeight: z.number(),
+    tx: z.string(),
 }).passthrough();
 
 export type FirmQuoteOkResponse = z.infer<typeof schemaFirmQuoteOkResponse>;
