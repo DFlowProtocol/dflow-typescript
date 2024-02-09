@@ -53,6 +53,7 @@ export enum ErrorCode {
     MarketMakerFeePayerBelowRentExemptMinimumAfterTx = 2011,
     MarketMakerInsufficientXAccountLamports = 2012,
     MarketMakerInsufficientFeePayerLamports = 2013,
+    RetailWalletCannotSendNativeSol = 2014,
 
     // EVM errors
     UnsupportedChainId = 3000,
@@ -291,6 +292,10 @@ export const marketMakerInsufficientFeePayerLamports = z.object({
     walletLamports: z.string(),
     requiredLamports: z.string(),
 });
+export const retailWalletCannotSendNativeSol = z.object({
+    code: z.literal(ErrorCode.RetailWalletCannotSendNativeSol),
+    msg: z.string(),
+});
 
 // EVM errors
 export const unsupportedChainId = z.object({
@@ -380,6 +385,7 @@ export const schemaErrorResponse = z.discriminatedUnion("code", [
     marketMakerFeePayerBelowRentExemptMinimumAfterTx,
     marketMakerInsufficientXAccountLamports,
     marketMakerInsufficientFeePayerLamports,
+    retailWalletCannotSendNativeSol,
 
     // EVM errors
     unsupportedChainId,
